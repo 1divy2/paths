@@ -1,0 +1,110 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-amber: var(--amber);
+  --color-cinnabar: var(--cinnabar);
+  --color-jade: var(--jade);
+  --color-indigo: var(--indigo);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--accent-foreground);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--accent);
+  --color-card: var(--panel);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--panel);
+  --color-popover-foreground: var(--foreground);
+  --color-secondary: var(--panel-2);
+  --color-secondary-foreground: var(--foreground);
+  --color-destructive: var(--cinnabar);
+  --color-destructive-foreground: var(--paper);
+}
+
+:root {
+  --background: oklch(0.18 0.012 60);
+  --foreground: oklch(0.94 0.018 80);
+  --ink: oklch(0.12 0.01 60);
+  --paper: oklch(0.96 0.02 80);
+  --panel: oklch(0.21 0.014 65);
+  --panel-2: oklch(0.25 0.016 65);
+  --line: oklch(0.32 0.015 65);
+  --line-soft: oklch(0.28 0.014 65);
+  --muted: oklch(0.26 0.014 65);
+  --muted-foreground: oklch(0.68 0.02 70);
+  --accent: oklch(0.78 0.16 70);          /* amber/ochre */
+  --accent-foreground: oklch(0.15 0.02 60);
+  --amber: oklch(0.78 0.16 70);
+  --cinnabar: oklch(0.62 0.21 30);
+  --jade: oklch(0.72 0.13 165);
+  --indigo: oklch(0.62 0.13 250);
+}
+
+.dark { color-scheme: dark; }
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+  * { border-color: var(--line); }
+  ::selection { background: var(--accent); color: var(--accent-foreground); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+}
+
+@layer utilities {
+  .font-serif { font-family: var(--font-serif); font-feature-settings: "ss01"; }
+  .font-mono  { font-family: var(--font-mono); }
+  .tick { background-image: linear-gradient(to right, var(--line) 1px, transparent 1px); background-size: 8px 100%; }
+  .grain {
+    background-image:
+      radial-gradient(oklch(0.96 0.02 80 / 0.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+}
+
+/* MapLibre overrides — make it feel editorial, not Google */
+.maplibregl-ctrl-attrib { background: transparent !important; color: var(--muted-foreground) !important; font-size: 10px; }
+.maplibregl-ctrl-attrib a { color: var(--muted-foreground) !important; }
+.maplibregl-popup-content {
+  background: var(--panel) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--line);
+  border-radius: 2px !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,.4) !important;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 8px 10px !important;
+}
+.maplibregl-popup-tip { border-top-color: var(--panel) !important; }
+.maplibregl-ctrl-group { background: var(--panel) !important; border: 1px solid var(--line) !important; }
+.maplibregl-ctrl-group button { background: var(--panel) !important; }
+.maplibregl-ctrl-group button span { filter: invert(0.85) hue-rotate(180deg); }
