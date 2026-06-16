@@ -1,10 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useCallback, useState } from "react";
+import { lazy, Suspense, useCallback } from "react";
 import LeftPanel from "@/components/paths/LeftPanel";
 import RightPanel from "@/components/paths/RightPanel";
 import BottomBar from "@/components/paths/BottomBar";
 import NavigationPanel from "@/components/paths/NavigationPanel";
-import type { PlaceHit, Quake, LatLng } from "@/lib/paths/api";
+import MapStyleWidget from "@/components/paths/MapStyleWidget";
+import ContextMenuOverlay from "@/components/paths/ContextMenuOverlay";
+import AuthWidget from "@/components/paths/AuthWidget";
+import FirebaseSync from "@/components/paths/FirebaseSync";
+import { ChevronLeft, ChevronRight, Coffee, Fuel, Bed, Banknote, X } from "lucide-react";
+import type { LatLng } from "@/lib/paths/api";
+import { useUIStore } from "@/lib/paths/UIStore";
 
 const MapView = lazy(() => import("@/components/paths/MapView"));
 
@@ -22,22 +28,12 @@ export const Route = createFileRoute("/")({
 });
 
 function PathsApp() {
-  const [selected, setSelected] = useState<PlaceHit | null>(null);
-  const [hover, setHover] = useState<PlaceHit | null>(null);
-  const [trail, setTrail] = useState<PlaceHit[]>([]);
-  const [flyTo, setFlyTo] = useState<{ lat: number; lng: number; zoom?: number } | null>(null);
-  const [quakes, setQuakes] = useState<Quake[]>([]);
-  const [showQuakes, setShowQuakes] = useState(true);
-  const [style, setStyle] = useState<"paths" | "voyager">("paths");
-  const [navOpen, setNavOpen] = useState(false);
-  const [route, setRoute] = useState<{ type: "LineString"; coordinates: [number, number][] } | null>(null);
-  const [routeEnds, setRouteEnds] = useState<{ from: LatLng | null; to: LatLng | null }>({ from: null, to: null });
-
-  const handlePick = useCallback((p: PlaceHit) => {
-    setSelected(p);
-    setTrail((t) => (t[t.length - 1]?.id === p.id ? t : [...t, p].slice(-12)));
-    setFlyTo({ lat: p.lat, lng: p.lng, zoom: p.kind === "country" ? 5 : p.kind === "wiki" ? 14 : 10 });
-  }, []);
+  const {
+    selected, hover, trail, flyTo, quakes, showQuakes, navOpen, route, routeEnds,
+    leftPanelOpen, rightPanelOpen, poiCategory,
+    setHover, clearTrail, setNavOpen, handlePick, setRouteData, setShowQuakes, setQuakes,
+    setLeftPanelOpen, setRightPanelOpen, setPoiCategory
+  } = useUIStore();
 
   const handleMapClick = useCallback((ll: LatLng) => {
     handlePick({
@@ -49,20 +45,20 @@ function PathsApp() {
   }, [handlePick]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden grid" style={{ gridTemplateColumns: "320px 1fr 380px", gridTemplateRows: "1fr 48px" }}>
+    <div 
+      className="h-screen w-screen overflow-hidden grid transition-[grid-template-columns] duration-300 ease-in-out relative" 
+      style={{ gridTemplateColumns: `${leftPanelOpen ? '320px' : '0px'} 1fr ${rightPanelOpen ? '380px' : '0px'}`, gridTemplateRows: "1fr 48px" }}
+    >
+      <ContextMenuOverlay />
+      <FirebaseSync />
+
       {/* Left */}
-      <div className="row-span-1 col-start-1 col-end-2 row-start-1 row-end-2 min-h-0">
-        <LeftPanel
-          onPick={handlePick}
-          onHover={setHover}
-          trail={trail}
-          onClearTrail={() => setTrail([])}
-          onOpenNav={() => setNavOpen(true)}
-        />
+      <div className="row-span-1 col-start-1 col-end-2 row-start-1 row-end-2 min-h-0 overflow-hidden">
+        <LeftPanel />
       </div>
 
       {/* Map */}
-      <div className="relative col-start-2 col-end-3 row-start-1 row-end-2 min-h-0 bg-background">
+      <div className="relative col-start-2 col-end-3 row-start-1 row-end-2 min-h-0 bg-background overflow-hidden">
         <Suspense fallback={<div className="absolute inset-0 grid place-items-center font-mono text-xs text-muted-foreground">unfolding the world…</div>}>
           <MapView
             selected={selected}
@@ -73,39 +69,60 @@ function PathsApp() {
             flyTo={flyTo}
             route={route}
             routeEndpoints={routeEnds}
-            style={style}
           />
         </Suspense>
-        <NavigationPanel
-          open={navOpen}
-          onClose={() => setNavOpen(false)}
-          onRoute={(r) => {
-            if (!r) { setRoute(null); setRouteEnds({ from: null, to: null }); return; }
-            setRoute(r.geometry);
-            setRouteEnds({ from: r.from, to: r.to });
-            // fit
-            const lats = r.geometry.coordinates.map((c) => c[1]);
-            const lngs = r.geometry.coordinates.map((c) => c[0]);
-            setFlyTo({ lat: (Math.min(...lats) + Math.max(...lats)) / 2, lng: (Math.min(...lngs) + Math.max(...lngs)) / 2, zoom: 7 });
-          }}
-        />
+        <NavigationPanel />
+
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+          {[
+            { id: "restaurants", icon: Coffee, label: "Restaurants" },
+            { id: "gas_stations", icon: Fuel, label: "Gas" },
+            { id: "hotels", icon: Bed, label: "Hotels" },
+            { id: "atms", icon: Banknote, label: "ATMs" },
+          ].map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setPoiCategory(poiCategory === cat.id ? null : cat.id as any)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border shadow-lg transition-colors font-mono text-[10px] uppercase tracking-widest ${
+                poiCategory === cat.id
+                  ? "bg-accent text-accent-foreground border-accent"
+                  : "bg-panel text-muted-foreground border-line hover:text-foreground"
+              }`}
+            >
+              <cat.icon className="size-3" />
+              {cat.label}
+              {poiCategory === cat.id && <X className="size-3 ml-1" />}
+            </button>
+          ))}
+        </div>
+
+        <MapStyleWidget />
+        <AuthWidget />
+
+        {/* Sidebar Toggles */}
+        <button
+          onClick={() => setLeftPanelOpen(!leftPanelOpen)}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-6 h-12 bg-panel border border-line border-l-0 rounded-r-md text-muted-foreground hover:text-foreground opacity-70 hover:opacity-100 transition-opacity"
+        >
+          {leftPanelOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+        </button>
+
+        <button
+          onClick={() => setRightPanelOpen(!rightPanelOpen)}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-6 h-12 bg-panel border border-line border-r-0 rounded-l-md text-muted-foreground hover:text-foreground opacity-70 hover:opacity-100 transition-opacity"
+        >
+          {rightPanelOpen ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+        </button>
       </div>
 
       {/* Right */}
-      <div className="col-start-3 col-end-4 row-start-1 row-end-2 min-h-0">
-        <RightPanel place={selected} onAddTrail={(p) => setTrail((t) => [...t, p])} onPick={handlePick} />
+      <div className="col-start-3 col-end-4 row-start-1 row-end-2 min-h-0 overflow-hidden">
+        <RightPanel />
       </div>
 
       {/* Bottom */}
       <div className="col-start-1 col-end-4 row-start-2 row-end-3">
-        <BottomBar
-          showQuakes={showQuakes}
-          onToggleQuakes={setShowQuakes}
-          style={style}
-          onSetStyle={setStyle}
-          onQuakes={setQuakes}
-          onPickQuake={(q) => handlePick({ id: q.id, name: q.place, displayName: q.place, kind: "earthquake", lat: q.lat, lng: q.lng })}
-        />
+        <BottomBar />
       </div>
     </div>
   );

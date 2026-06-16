@@ -81,6 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@paths" },
+      { httpEquiv: "Content-Security-Policy", content: "default-src 'self'; img-src 'self' data: blob: *; connect-src 'self' *; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://apis.google.com https://www.gstatic.com; frame-src 'self' https://paths0.firebaseapp.com; worker-src 'self' blob:; child-src 'self' blob:; style-src 'self' 'unsafe-inline' *; font-src 'self' *;" },
     ],
     links: [
       {

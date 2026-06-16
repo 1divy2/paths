@@ -1,33 +1,25 @@
-import { useEffect, useState } from "react";
-import { searchPlaces, type PlaceHit, SEEDS } from "@/lib/atlas/api";
-import { Search, Compass, Sparkles, Route as RouteIcon, X } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { searchPlaces, SEEDS, type PlaceHit } from "@/lib/paths/api";
+import { Search, Compass, Sparkles, Route as RouteIcon, X, Home, Layers } from "lucide-react";
+import { useUIStore } from "@/lib/paths/UIStore";
+import { motion, AnimatePresence } from "framer-motion";
 
-type Props = {
-  onPick: (p: PlaceHit) => void;
-  onHover: (p: PlaceHit | null) => void;
-  trail: PlaceHit[];
-  onClearTrail: () => void;
-  onOpenNav: () => void;
-};
-
-export default function LeftPanel({ onPick, onHover, trail, onClearTrail, onOpenNav }: Props) {
+export default function LeftPanel() {
+  const { handlePick, setHover, trail, clearTrail, setNavOpen, omniscienceLayer, setOmniscienceLayer, homePlace } = useUIStore();
   const [q, setQ] = useState("");
-  const [hits, setHits] = useState<PlaceHit[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!q.trim()) { setHits([]); return; }
-    const ctrl = new AbortController();
-    setLoading(true);
-    const t = setTimeout(async () => {
-      try {
-        const r = await searchPlaces(q, ctrl.signal);
-        setHits(r);
-      } catch {}
-      setLoading(false);
-    }, 280);
-    return () => { clearTimeout(t); ctrl.abort(); };
-  }, [q]);
+  const { data: rawHits = [], isLoading: loading } = useQuery({
+    queryKey: ["search", q],
+    queryFn: async ({ signal }) => {
+      return searchPlaces(q, signal);
+    },
+    enabled: q.trim().length > 0,
+    staleTime: 60_000,
+  });
+
+  const hits = rawHits as any[];
+
 
   return (
     <aside className="flex flex-col h-full bg-panel border-r border-line overflow-hidden">
@@ -35,7 +27,7 @@ export default function LeftPanel({ onPick, onHover, trail, onClearTrail, onOpen
       <header className="px-4 pt-4 pb-3 border-b border-line">
         <div className="flex items-baseline justify-between">
           <h1 className="font-serif text-2xl tracking-tight leading-none">
-            Atlas<span className="text-accent">.</span>
+            PaTHs<span className="text-accent">.</span>
           </h1>
           <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">v.0 · open earth</span>
         </div>
@@ -54,31 +46,78 @@ export default function LeftPanel({ onPick, onHover, trail, onClearTrail, onOpen
             placeholder="Search a place, river, mountain…"
             className="w-full bg-background border border-line pl-8 pr-7 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:border-accent"
           />
-          {q && <button onClick={() => setQ("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="size-3.5" /></button>}
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {q && <button onClick={() => setQ("")} className="text-muted-foreground hover:text-foreground"><X className="size-3.5" /></button>}
+            {homePlace && (
+              <button
+                onClick={() => handlePick(homePlace)}
+                className="p-1 rounded text-orange-500 hover:text-orange-400 bg-orange-500/10"
+                title={`Go to Home: ${homePlace.name}`}
+              >
+                <Home className="size-3.5" />
+              </button>
+            )}
+
+          </div>
         </div>
 
-        {loading && <div className="font-mono text-[10px] text-muted-foreground mt-2">indexing…</div>}
+        {loading && <div className="font-mono text-[10px] text-muted-foreground mt-2">
+          indexing…
+        </div>}
 
         {hits.length > 0 && (
-          <ul className="mt-2 max-h-64 overflow-y-auto border border-line-soft divide-y divide-line-soft">
-            {hits.map((h) => (
-              <li key={h.id}>
-                <button
-                  onClick={() => { onPick(h); setHits([]); setQ(""); }}
-                  onMouseEnter={() => onHover(h)}
-                  onMouseLeave={() => onHover(null)}
-                  className="w-full text-left px-2.5 py-2 hover:bg-panel-2 group"
-                >
-                  <div className="text-sm leading-tight">{h.name}</div>
-                  <div className="font-mono text-[10px] text-muted-foreground truncate mt-0.5">
-                    <span className="text-accent">{h.kind}</span> · {h.displayName}
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-2">
+
+            <ul className="max-h-64 overflow-y-auto border border-line-soft divide-y divide-line-soft overflow-x-hidden">
+              <AnimatePresence>
+                {hits.map((h) => (
+                  <motion.li 
+                    key={h.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <button
+                      onClick={() => { handlePick(h); setQ(""); }}
+                      onMouseEnter={() => setHover(h)}
+                      onMouseLeave={() => setHover(null)}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors group flex items-start gap-2"
+                    >
+                      <span className="text-muted-foreground group-hover:text-accent mt-0.5">•</span>
+                      <div>
+                        <div className="font-serif leading-tight">{h.name}</div>
+                        <div className="font-mono text-[9px] text-muted-foreground mt-0.5 truncate max-w-[240px] uppercase tracking-widest">{h.displayName}</div>
+                        {h.reason && (
+                          <div className="font-mono text-[9px] text-muted-foreground mt-1.5 leading-snug border-l-2 border-accent/50 pl-2">
+                            {h.reason}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  </motion.li>
+                ))}
+              </AnimatePresence>
+            </ul>
+          </div>
         )}
       </div>
+
+      {/* Omniscience Layer */}
+      {omniscienceLayer && (
+        <div className="px-4 py-3 border-b border-line bg-accent/5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-accent">
+              <Layers className="size-3" /> Custom Layer
+            </div>
+            <button onClick={() => setOmniscienceLayer(null)} className="font-mono text-[10px] text-muted-foreground hover:text-cinnabar"><X className="size-3" /></button>
+          </div>
+          <div className="text-sm font-serif leading-snug text-accent mb-2">"{omniscienceLayer.title}"</div>
+          <div className="font-mono text-[10px] text-muted-foreground">
+            {omniscienceLayer.places.length} AI-plotted locations actively rendering on the map.
+          </div>
+        </div>
+      )}
 
       {/* Trail */}
       <div className="px-4 py-3 border-b border-line">
@@ -87,7 +126,7 @@ export default function LeftPanel({ onPick, onHover, trail, onClearTrail, onOpen
             <Compass className="size-3" /> Exploration Trail
           </div>
           {trail.length > 0 && (
-            <button onClick={onClearTrail} className="font-mono text-[10px] text-muted-foreground hover:text-cinnabar">clear</button>
+            <button onClick={clearTrail} className="font-mono text-[10px] text-muted-foreground hover:text-cinnabar">clear</button>
           )}
         </div>
         {trail.length === 0 ? (
@@ -97,7 +136,7 @@ export default function LeftPanel({ onPick, onHover, trail, onClearTrail, onOpen
             {trail.map((p, i) => (
               <li key={`${p.id}-${i}`} className="flex items-start gap-2">
                 <span className="font-mono text-[10px] text-accent mt-0.5 w-5 tabular-nums">{String(i + 1).padStart(2, "0")}</span>
-                <button onClick={() => onPick(p)} className="text-sm text-left hover:text-accent leading-tight">
+                <button onClick={() => handlePick(p)} className="text-sm text-left hover:text-accent leading-tight">
                   {p.name}
                   <span className="block font-mono text-[10px] text-muted-foreground">{p.kind}</span>
                 </button>
@@ -116,7 +155,7 @@ export default function LeftPanel({ onPick, onHover, trail, onClearTrail, onOpen
           {SEEDS.slice(0, 6).map((s) => (
             <li key={s.name}>
               <button
-                onClick={() => onPick({ id: s.name, name: s.name, displayName: s.name, kind: "curiosity", lat: s.lat, lng: s.lng })}
+                onClick={() => handlePick({ id: s.name, name: s.name, displayName: s.name, kind: "curiosity", lat: s.lat, lng: s.lng })}
                 className="w-full text-left group"
               >
                 <div className="text-sm leading-tight group-hover:text-accent">{s.name}</div>
@@ -130,7 +169,7 @@ export default function LeftPanel({ onPick, onHover, trail, onClearTrail, onOpen
       {/* Navigate */}
       <div className="mt-auto px-4 py-3 border-t border-line">
         <button
-          onClick={onOpenNav}
+          onClick={() => setNavOpen(true)}
           className="w-full flex items-center justify-between px-3 py-2 bg-background border border-line hover:border-accent hover:text-accent transition-colors"
         >
           <span className="flex items-center gap-2 text-sm"><RouteIcon className="size-3.5" /> Navigate between two points</span>

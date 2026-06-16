@@ -1,0 +1,6 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "paths",
+  "compatibility_date": "2024-04-01",
+  "pages_build_output_dir": ".output/public"
+}

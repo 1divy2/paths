@@ -135,27 +135,23 @@ const countryCache = new Map<string, Country>();
 export async function getCountry(cca2: string, signal?: AbortSignal): Promise<Country | null> {
   const key = cca2.toUpperCase();
   if (countryCache.has(key)) return countryCache.get(key)!;
-  const r = await fetch(`https://restcountries.com/v3.1/alpha/${key}?fields=cca2,name,capital,region,subregion,population,area,languages,currencies,flag,borders,car,timezones`, { signal });
-  if (!r.ok) return null;
-  const j = await r.json();
-  const c: Country = {
-    cca2: j.cca2,
-    name: j.name.common,
-    official: j.name.official,
-    capital: j.capital?.[0],
-    region: j.region,
-    subregion: j.subregion,
-    population: j.population,
-    area: j.area,
-    languages: Object.values(j.languages || {}),
-    currencies: Object.values(j.currencies || {}).map((x: any) => `${x.name} (${x.symbol || ""})`),
-    flag: j.flag,
-    borders: j.borders || [],
-    drives: j.car?.side || "—",
-    timezones: j.timezones || [],
-  };
-  countryCache.set(key, c);
-  return c;
+  
+  try {
+    const r = await fetch('/countries.json', { signal });
+    if (!r.ok) return null;
+    
+    const data = await r.json();
+    
+    // Cache all countries for subsequent lookups
+    for (const [k, v] of Object.entries(data)) {
+      countryCache.set(k, v as Country);
+    }
+    
+    return countryCache.get(key) || null;
+  } catch (err) {
+    console.error("Failed to load countries:", err);
+    return null;
+  }
 }
 
 export type Quake = { id: string; mag: number; place: string; time: number; lat: number; lng: number; depth: number };
@@ -192,6 +188,59 @@ export async function getRoute(a: LatLng, b: LatLng, mode: "driving" | "walking"
       distance: s.distance,
     })),
   };
+}
+
+export type POI = {
+  id: number;
+  lat: number;
+  lng: number;
+  name: string;
+  category: string;
+  tags: Record<string, string>;
+};
+
+export async function getPOIs(bounds: { _sw: LatLng; _ne: LatLng }, category: "restaurants" | "gas_stations" | "hotels" | "atms"): Promise<POI[]> {
+  const queryMap = {
+    restaurants: `["amenity"~"restaurant|cafe|fast_food"]`,
+    gas_stations: `["amenity"="fuel"]`,
+    hotels: `["tourism"~"hotel|motel|hostel"]`,
+    atms: `["amenity"~"atm|bank"]`,
+  };
+  
+  const query = `
+    [out:json][timeout:10];
+    (
+      nwr${queryMap[category]}(${bounds._sw.lat},${bounds._sw.lng},${bounds._ne.lat},${bounds._ne.lng});
+    );
+    out center;
+  `;
+
+  const endpoints = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.osm.ch/api/interpreter"
+  ];
+
+  for (const endpoint of endpoints) {
+    const url = `${endpoint}?data=${encodeURIComponent(query)}`;
+    try {
+      const r = await fetch(url);
+      if (!r.ok) continue; // Try next endpoint
+      const j = await r.json();
+      return (j.elements || []).filter((e: any) => e.tags).map((e: any) => ({
+        id: e.id,
+        lat: e.lat || e.center?.lat,
+        lng: e.lon || e.center?.lon,
+        name: e.tags.name || e.tags.brand || e.tags.operator || category.replace('_', ' '),
+        category,
+        tags: e.tags,
+      })).filter((e: any) => e.lat && e.lng);
+    } catch (err) {
+      console.error(`Failed to fetch POIs from ${endpoint}:`, err);
+      // Try next endpoint
+    }
+  }
+  return [];
 }
 
 export const WEATHER_CODE: Record<number, string> = {
