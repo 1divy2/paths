@@ -35,11 +35,11 @@ export const useLayerManager = create<LayerManagerState>((set) => ({
   style: "paths",
   epochYear: 2024,
   layers: {},
-  
+
   setProjection: (proj) => set({ projection: proj }),
   setStyle: (style) => set({ style }),
   setEpochYear: (year) => set({ epochYear: year }),
-  
+
   toggleLayer: (id, visible) =>
     set((state) => {
       const layer = state.layers[id];
@@ -54,19 +54,19 @@ export const useLayerManager = create<LayerManagerState>((set) => ({
         },
       };
     }),
-    
+
   addLayer: (layer) =>
     set((state) => ({
       layers: { ...state.layers, [layer.id]: layer },
     })),
-    
+
   removeLayer: (id) =>
     set((state) => {
       const newLayers = { ...state.layers };
       delete newLayers[id];
       return { layers: newLayers };
     }),
-    
+
   updateLayerData: (id, data) =>
     set((state) => {
       const layer = state.layers[id];

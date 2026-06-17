@@ -1,30 +1,66 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getQuakes, type Quake } from "@/lib/paths/api";
-import { Activity, Layers, Globe, Network, Landmark, Users, ArrowRightLeft, Skull, Music, Waves, Sparkles, Sprout, Hammer, Castle, Cable, Landmark as Bank, Flame, Navigation } from "lucide-react";
+import {
+  Activity,
+  Layers,
+  Globe,
+  Network,
+  Landmark,
+  Users,
+  ArrowRightLeft,
+  Skull,
+  Music,
+  Waves,
+  Sparkles,
+  Sprout,
+  Hammer,
+  Castle,
+  Cable,
+  Landmark as Bank,
+  Flame,
+  Navigation,
+} from "lucide-react";
 import { useLayerManager } from "@/lib/paths/LayerManager";
 import { useUIStore } from "@/lib/paths/UIStore";
 
 export default function BottomBar() {
   const { style, setStyle, projection, setProjection } = useLayerManager();
-  const setStoreQuakes = useUIStore(state => state.setQuakes);
-  const { 
-    showAlliances, setShowAlliances, 
-    showLostCities, setShowLostCities,
-    showPopulation, setShowPopulation,
-    showMigration, setShowMigration,
-    showFolklore, setShowFolklore,
-    showMusic, setShowMusic,
-    showOceans, setShowOceans,
-    showCosmic, setShowCosmic,
-    showBiology, setShowBiology,
-    showFootprint, setShowFootprint,
-    showArchitecture, setShowArchitecture,
-    showUnderground, setShowUnderground,
-    showEconomics, setShowEconomics,
-    showExtremes, setShowExtremes,
-    showJourneys, setShowJourneys,
-    showQuakes, setShowQuakes, handlePick
+  const setStoreQuakes = useUIStore((state) => state.setQuakes);
+  const {
+    showAlliances,
+    setShowAlliances,
+    showLostCities,
+    setShowLostCities,
+    showPopulation,
+    setShowPopulation,
+    showMigration,
+    setShowMigration,
+    showFolklore,
+    setShowFolklore,
+    showMusic,
+    setShowMusic,
+    showOceans,
+    setShowOceans,
+    showCosmic,
+    setShowCosmic,
+    showBiology,
+    setShowBiology,
+    showFootprint,
+    setShowFootprint,
+    showArchitecture,
+    setShowArchitecture,
+    showUnderground,
+    setShowUnderground,
+    showEconomics,
+    setShowEconomics,
+    showExtremes,
+    setShowExtremes,
+    showJourneys,
+    setShowJourneys,
+    showQuakes,
+    setShowQuakes,
+    handlePick,
   } = useUIStore();
 
   const { data: quakes = [] } = useQuery({
@@ -41,9 +77,10 @@ export default function BottomBar() {
     }
   }, [quakes, setStoreQuakes]);
 
-
-
-  const top = quakes.slice().sort((a, b) => b.time - a.time).slice(0, 12);
+  const top = quakes
+    .slice()
+    .sort((a, b) => b.time - a.time)
+    .slice(0, 12);
 
   return (
     <footer className="h-12 bg-panel border-t border-line flex items-stretch">
@@ -65,14 +102,19 @@ export default function BottomBar() {
         <ul className="flex items-center h-full gap-6 animate-[ticker_90s_linear_infinite] whitespace-nowrap px-4">
           {[...top, ...top].map((q, i) => (
             <li key={`${q.id}-${i}`}>
-              <button onClick={() => handlePick({
-                id: q.id,
-                name: q.place,
-                displayName: `M${q.mag.toFixed(1)} Earthquake`,
-                lat: q.lat,
-                lng: q.lng,
-                kind: "quake"
-              })} className="font-mono text-[11px] text-muted-foreground hover:text-accent">
+              <button
+                onClick={() =>
+                  handlePick({
+                    id: q.id,
+                    name: q.place,
+                    displayName: `M${q.mag.toFixed(1)} Earthquake`,
+                    lat: q.lat,
+                    lng: q.lng,
+                    kind: "quake",
+                  })
+                }
+                className="font-mono text-[11px] text-muted-foreground hover:text-accent"
+              >
                 <span className="text-amber font-semibold tabular-nums">M{q.mag.toFixed(1)}</span>
                 <span className="text-muted-foreground"> · {q.place}</span>
                 <span className="text-line ml-2">·</span>
@@ -198,7 +240,10 @@ export default function BottomBar() {
           Quakes
         </button>
         <div className="flex border border-line">
-          <button onClick={() => setProjection(projection === "globe" ? "mercator" : "globe")} className={`font-mono text-[10px] uppercase tracking-widest px-2 py-1 ${projection === "globe" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+          <button
+            onClick={() => setProjection(projection === "globe" ? "mercator" : "globe")}
+            className={`font-mono text-[10px] uppercase tracking-widest px-2 py-1 ${projection === "globe" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
             <Globe className="inline size-3 -mt-0.5" /> 3D
           </button>
         </div>

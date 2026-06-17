@@ -1,5 +1,14 @@
 import { useEffect, useRef } from "react";
-import { onAuthStateChanged, doc, setDoc, getDoc, onSnapshot, db, auth, type User } from "@/lib/paths/firebase";
+import {
+  onAuthStateChanged,
+  doc,
+  setDoc,
+  getDoc,
+  onSnapshot,
+  db,
+  auth,
+  type User,
+} from "@/lib/paths/firebase";
 import { useUIStore } from "@/lib/paths/UIStore";
 
 export default function FirebaseSync() {
@@ -13,7 +22,7 @@ export default function FirebaseSync() {
       if (user) {
         // User logged in.
         const userRef = doc(db, "users", user.uid);
-        
+
         // 1. Fetch initial remote state
         isHydrating.current = true;
         try {
@@ -60,21 +69,25 @@ export default function FirebaseSync() {
   useEffect(() => {
     // We only want to sync when the user changes things, not during initial hydration
     if (isHydrating.current) return;
-    
+
     const syncStateToCloud = async () => {
-      const { currentUser } = await import("firebase/auth").then(m => m.getAuth());
+      const { currentUser } = await import("firebase/auth").then((m) => m.getAuth());
       if (currentUser) {
         const userRef = doc(db, "users", currentUser.uid);
         try {
-          await setDoc(userRef, {
-            homePlace: store.homePlace,
-            savedLists: store.savedLists,
-            reviews: store.reviews,
-            trail: store.trail,
-            mapViewport: store.mapViewport,
-            themeMode: store.themeMode,
-            updatedAt: Date.now()
-          }, { merge: true });
+          await setDoc(
+            userRef,
+            {
+              homePlace: store.homePlace,
+              savedLists: store.savedLists,
+              reviews: store.reviews,
+              trail: store.trail,
+              mapViewport: store.mapViewport,
+              themeMode: store.themeMode,
+              updatedAt: Date.now(),
+            },
+            { merge: true },
+          );
         } catch (e) {
           console.error("Cloud sync failed", e);
         }
@@ -85,7 +98,12 @@ export default function FirebaseSync() {
     const timer = setTimeout(syncStateToCloud, 2000);
     return () => clearTimeout(timer);
   }, [
-    store.homePlace, store.savedLists, store.reviews, store.trail, store.mapViewport, store.themeMode
+    store.homePlace,
+    store.savedLists,
+    store.reviews,
+    store.trail,
+    store.mapViewport,
+    store.themeMode,
   ]);
 
   return null; // Headless component

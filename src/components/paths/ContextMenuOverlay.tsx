@@ -4,7 +4,8 @@ import { Navigation, Ruler, Bookmark, MapPin } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function ContextMenuOverlay() {
-  const { contextMenu, setContextMenu, handlePick, setMeasurementMode, setMeasurementPoints } = useUIStore();
+  const { contextMenu, setContextMenu, handlePick, setMeasurementMode, setMeasurementPoints } =
+    useUIStore();
   const ref = useRef<HTMLDivElement>(null);
 
   // Close on outside click or escape
@@ -15,16 +16,16 @@ export default function ContextMenuOverlay() {
       }
     };
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setContextMenu(null);
+      if (e.key === "Escape") setContextMenu(null);
     };
 
     if (contextMenu) {
-      document.addEventListener('mousedown', handleClick);
-      document.addEventListener('keydown', handleKey);
+      document.addEventListener("mousedown", handleClick);
+      document.addEventListener("keydown", handleKey);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
     };
   }, [contextMenu, setContextMenu]);
 
@@ -49,7 +50,9 @@ export default function ContextMenuOverlay() {
                 id: `ctx-${contextMenu.lat}-${contextMenu.lng}`,
                 name: "Selected Point",
                 displayName: `${contextMenu.lat.toFixed(4)}, ${contextMenu.lng.toFixed(4)}`,
-                lat: contextMenu.lat, lng: contextMenu.lng, kind: "click"
+                lat: contextMenu.lat,
+                lng: contextMenu.lng,
+                kind: "click",
               });
               setContextMenu(null);
             }}

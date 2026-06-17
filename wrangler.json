@@ -1,6 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "paths",
+  "main": "dist/server/server.js",
   "compatibility_date": "2024-04-01",
-  "pages_build_output_dir": ".output/public"
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "dist/client",
+    "binding": "ASSETS"
+  }
 }

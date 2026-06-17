@@ -18,9 +18,16 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "PaTHs — A reading room for the planet" },
-      { name: "description", content: "PaTHs is a discovery-first world map. Click anywhere on Earth and read what makes it that place." },
+      {
+        name: "description",
+        content:
+          "PaTHs is a discovery-first world map. Click anywhere on Earth and read what makes it that place.",
+      },
       { property: "og:title", content: "PaTHs — A reading room for the planet" },
-      { property: "og:description", content: "Click anywhere on Earth and read what makes it that place." },
+      {
+        property: "og:description",
+        content: "Click anywhere on Earth and read what makes it that place.",
+      },
     ],
   }),
   ssr: false,
@@ -29,25 +36,51 @@ export const Route = createFileRoute("/")({
 
 function PathsApp() {
   const {
-    selected, hover, trail, flyTo, quakes, showQuakes, navOpen, route, routeEnds,
-    leftPanelOpen, rightPanelOpen, poiCategory,
-    setHover, clearTrail, setNavOpen, handlePick, setRouteData, setShowQuakes, setQuakes,
-    setLeftPanelOpen, setRightPanelOpen, setPoiCategory
+    selected,
+    hover,
+    trail,
+    flyTo,
+    quakes,
+    showQuakes,
+    navOpen,
+    route,
+    routeEnds,
+    leftPanelOpen,
+    rightPanelOpen,
+    poiCategory,
+    setHover,
+    clearTrail,
+    setNavOpen,
+    handlePick,
+    setRouteData,
+    setShowQuakes,
+    setQuakes,
+    setLeftPanelOpen,
+    setRightPanelOpen,
+    setPoiCategory,
   } = useUIStore();
 
-  const handleMapClick = useCallback((ll: LatLng) => {
-    handlePick({
-      id: `click-${ll.lat}-${ll.lng}`,
-      name: "Unnamed point",
-      displayName: `${ll.lat.toFixed(4)}, ${ll.lng.toFixed(4)}`,
-      lat: ll.lat, lng: ll.lng, kind: "click",
-    });
-  }, [handlePick]);
+  const handleMapClick = useCallback(
+    (ll: LatLng) => {
+      handlePick({
+        id: `click-${ll.lat}-${ll.lng}`,
+        name: "Unnamed point",
+        displayName: `${ll.lat.toFixed(4)}, ${ll.lng.toFixed(4)}`,
+        lat: ll.lat,
+        lng: ll.lng,
+        kind: "click",
+      });
+    },
+    [handlePick],
+  );
 
   return (
-    <div 
-      className="h-screen w-screen overflow-hidden grid transition-[grid-template-columns] duration-300 ease-in-out relative" 
-      style={{ gridTemplateColumns: `${leftPanelOpen ? '320px' : '0px'} 1fr ${rightPanelOpen ? '380px' : '0px'}`, gridTemplateRows: "1fr 48px" }}
+    <div
+      className="h-screen w-screen overflow-hidden grid transition-[grid-template-columns] duration-300 ease-in-out relative"
+      style={{
+        gridTemplateColumns: `${leftPanelOpen ? "320px" : "0px"} 1fr ${rightPanelOpen ? "380px" : "0px"}`,
+        gridTemplateRows: "1fr 48px",
+      }}
     >
       <ContextMenuOverlay />
       <FirebaseSync />
@@ -59,7 +92,13 @@ function PathsApp() {
 
       {/* Map */}
       <div className="relative col-start-2 col-end-3 row-start-1 row-end-2 min-h-0 bg-background overflow-hidden">
-        <Suspense fallback={<div className="absolute inset-0 grid place-items-center font-mono text-xs text-muted-foreground">unfolding the world…</div>}>
+        <Suspense
+          fallback={
+            <div className="absolute inset-0 grid place-items-center font-mono text-xs text-muted-foreground">
+              unfolding the world…
+            </div>
+          }
+        >
           <MapView
             selected={selected}
             onPick={handleMapClick}
@@ -82,7 +121,7 @@ function PathsApp() {
           ].map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setPoiCategory(poiCategory === cat.id ? null : cat.id as any)}
+              onClick={() => setPoiCategory(poiCategory === cat.id ? null : (cat.id as any))}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border shadow-lg transition-colors font-mono text-[10px] uppercase tracking-widest ${
                 poiCategory === cat.id
                   ? "bg-accent text-accent-foreground border-accent"
@@ -111,7 +150,11 @@ function PathsApp() {
           onClick={() => setRightPanelOpen(!rightPanelOpen)}
           className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-6 h-12 bg-panel border border-line border-r-0 rounded-l-md text-muted-foreground hover:text-foreground opacity-70 hover:opacity-100 transition-opacity"
         >
-          {rightPanelOpen ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+          {rightPanelOpen ? (
+            <ChevronRight className="size-4" />
+          ) : (
+            <ChevronLeft className="size-4" />
+          )}
         </button>
       </div>
 

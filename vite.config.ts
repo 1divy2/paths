@@ -8,30 +8,26 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
-    tanstackStart({
-      server: {
-        preset: "cloudflare-pages"
-      }
-    }),
+    tanstackStart(),
     tailwindcss(),
     tsconfigPaths(),
     react(),
-    VitePWA({
-      registerType: "autoUpdate",
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/basemaps\.cartocdn\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "carto-cache",
-              expiration: { maxEntries: 500, maxAgeSeconds: 30 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
-      },
-    }),
+    // VitePWA({
+    //   registerType: "autoUpdate",
+    //   workbox: {
+    //     globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+    //     runtimeCaching: [
+    //       {
+    //         urlPattern: /^https:\/\/basemaps\.cartocdn\.com\/.*/i,
+    //         handler: "CacheFirst",
+    //         options: {
+    //           cacheName: "carto-cache",
+    //           expiration: { maxEntries: 500, maxAgeSeconds: 30 * 24 * 60 * 60 },
+    //           cacheableResponse: { statuses: [0, 200] },
+    //         },
+    //       },
+    //     ],
+    //   },
+    // }),
   ],
 });

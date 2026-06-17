@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signInWithGoogle, logout, auth, type User } from "@/lib/paths/firebase";
+import {
+  onAuthStateChanged,
+  signInWithGoogle,
+  logout,
+  auth,
+  type User,
+} from "@/lib/paths/firebase";
 import { UserCircle, LogOut } from "lucide-react";
 
 export default function AuthWidget() {
@@ -23,7 +29,11 @@ export default function AuthWidget() {
         </button>
       ) : (
         <div className="flex items-center gap-3 pl-2 pr-1 py-1">
-          <img src={user.photoURL || ""} alt="" className="size-6 rounded-full border border-line" />
+          <img
+            src={user.photoURL || ""}
+            alt=""
+            className="size-6 rounded-full border border-line"
+          />
           <span className="text-[11px] font-mono text-muted-foreground hidden md:inline">
             {user.displayName}
           </span>

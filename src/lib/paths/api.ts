@@ -35,19 +35,36 @@ export async function searchPlaces(q: string, signal?: AbortSignal): Promise<Pla
     kind: h.type || h.category || "place",
     countryCode: h.address?.country_code?.toUpperCase(),
     bbox: h.boundingbox
-      ? [parseFloat(h.boundingbox[2]), parseFloat(h.boundingbox[0]), parseFloat(h.boundingbox[3]), parseFloat(h.boundingbox[1])]
+      ? [
+          parseFloat(h.boundingbox[2]),
+          parseFloat(h.boundingbox[0]),
+          parseFloat(h.boundingbox[3]),
+          parseFloat(h.boundingbox[1]),
+        ]
       : undefined,
   }));
 }
 
-export async function reverseGeocode(lat: number, lng: number, signal?: AbortSignal): Promise<PlaceHit | null> {
+export async function reverseGeocode(
+  lat: number,
+  lng: number,
+  signal?: AbortSignal,
+): Promise<PlaceHit | null> {
   const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat=${lat}&lon=${lng}`;
   const r = await fetch(url, { headers: UA, signal });
   if (!r.ok) return null;
   const h = await r.json();
   if (!h || h.error) return null;
   const addr = h.address || {};
-  const name = addr.city || addr.town || addr.village || addr.county || addr.state || addr.country || h.name || "Unknown";
+  const name =
+    addr.city ||
+    addr.town ||
+    addr.village ||
+    addr.county ||
+    addr.state ||
+    addr.country ||
+    h.name ||
+    "Unknown";
   return {
     id: String(h.place_id),
     name,
@@ -66,7 +83,10 @@ export type WikiSummary = {
   url: string;
 };
 
-export async function wikiSummary(title: string, signal?: AbortSignal): Promise<WikiSummary | null> {
+export async function wikiSummary(
+  title: string,
+  signal?: AbortSignal,
+): Promise<WikiSummary | null> {
   const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
   const r = await fetch(url, { signal });
   if (!r.ok) return null;
@@ -80,12 +100,21 @@ export async function wikiSummary(title: string, signal?: AbortSignal): Promise<
   };
 }
 
-export async function wikiNearby(lat: number, lng: number, signal?: AbortSignal): Promise<{ title: string; dist: number; lat: number; lng: number }[]> {
+export async function wikiNearby(
+  lat: number,
+  lng: number,
+  signal?: AbortSignal,
+): Promise<{ title: string; dist: number; lat: number; lng: number }[]> {
   const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}%7C${lng}&gsradius=10000&gslimit=15&format=json&origin=*`;
   const r = await fetch(url, { signal });
   if (!r.ok) return [];
   const j = await r.json();
-  return (j.query?.geosearch || []).map((g: any) => ({ title: g.title, dist: g.dist, lat: g.lat, lng: g.lon }));
+  return (j.query?.geosearch || []).map((g: any) => ({
+    title: g.title,
+    dist: g.dist,
+    lat: g.lat,
+    lng: g.lon,
+  }));
 }
 
 export type Weather = {
@@ -97,7 +126,11 @@ export type Weather = {
   isDay: boolean;
 };
 
-export async function getWeather(lat: number, lng: number, signal?: AbortSignal): Promise<Weather | null> {
+export async function getWeather(
+  lat: number,
+  lng: number,
+  signal?: AbortSignal,
+): Promise<Weather | null> {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,weather_code,is_day&timezone=auto`;
   const r = await fetch(url, { signal });
   if (!r.ok) return null;
@@ -135,18 +168,18 @@ const countryCache = new Map<string, Country>();
 export async function getCountry(cca2: string, signal?: AbortSignal): Promise<Country | null> {
   const key = cca2.toUpperCase();
   if (countryCache.has(key)) return countryCache.get(key)!;
-  
+
   try {
-    const r = await fetch('/countries.json', { signal });
+    const r = await fetch("/countries.json", { signal });
     if (!r.ok) return null;
-    
+
     const data = await r.json();
-    
+
     // Cache all countries for subsequent lookups
     for (const [k, v] of Object.entries(data)) {
       countryCache.set(k, v as Country);
     }
-    
+
     return countryCache.get(key) || null;
   } catch (err) {
     console.error("Failed to load countries:", err);
@@ -154,10 +187,20 @@ export async function getCountry(cca2: string, signal?: AbortSignal): Promise<Co
   }
 }
 
-export type Quake = { id: string; mag: number; place: string; time: number; lat: number; lng: number; depth: number };
+export type Quake = {
+  id: string;
+  mag: number;
+  place: string;
+  time: number;
+  lat: number;
+  lng: number;
+  depth: number;
+};
 
 export async function getQuakes(): Promise<Quake[]> {
-  const r = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson");
+  const r = await fetch(
+    "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson",
+  );
   if (!r.ok) return [];
   const j = await r.json();
   return (j.features || []).map((f: any) => ({
@@ -171,7 +214,11 @@ export async function getQuakes(): Promise<Quake[]> {
   }));
 }
 
-export async function getRoute(a: LatLng, b: LatLng, mode: "driving" | "walking" | "cycling" = "driving") {
+export async function getRoute(
+  a: LatLng,
+  b: LatLng,
+  mode: "driving" | "walking" | "cycling" = "driving",
+) {
   const profile = mode === "driving" ? "car" : mode === "walking" ? "foot" : "bike";
   const url = `https://routing.openstreetmap.de/routed-${profile}/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson&steps=true`;
   const r = await fetch(url);
@@ -199,14 +246,17 @@ export type POI = {
   tags: Record<string, string>;
 };
 
-export async function getPOIs(bounds: { _sw: LatLng; _ne: LatLng }, category: "restaurants" | "gas_stations" | "hotels" | "atms"): Promise<POI[]> {
+export async function getPOIs(
+  bounds: { _sw: LatLng; _ne: LatLng },
+  category: "restaurants" | "gas_stations" | "hotels" | "atms",
+): Promise<POI[]> {
   const queryMap = {
     restaurants: `["amenity"~"restaurant|cafe|fast_food"]`,
     gas_stations: `["amenity"="fuel"]`,
     hotels: `["tourism"~"hotel|motel|hostel"]`,
     atms: `["amenity"~"atm|bank"]`,
   };
-  
+
   const query = `
     [out:json][timeout:10];
     (
@@ -218,7 +268,7 @@ export async function getPOIs(bounds: { _sw: LatLng; _ne: LatLng }, category: "r
   const endpoints = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
-    "https://overpass.osm.ch/api/interpreter"
+    "https://overpass.osm.ch/api/interpreter",
   ];
 
   for (const endpoint of endpoints) {
@@ -227,14 +277,17 @@ export async function getPOIs(bounds: { _sw: LatLng; _ne: LatLng }, category: "r
       const r = await fetch(url);
       if (!r.ok) continue; // Try next endpoint
       const j = await r.json();
-      return (j.elements || []).filter((e: any) => e.tags).map((e: any) => ({
-        id: e.id,
-        lat: e.lat || e.center?.lat,
-        lng: e.lon || e.center?.lon,
-        name: e.tags.name || e.tags.brand || e.tags.operator || category.replace('_', ' '),
-        category,
-        tags: e.tags,
-      })).filter((e: any) => e.lat && e.lng);
+      return (j.elements || [])
+        .filter((e: any) => e.tags)
+        .map((e: any) => ({
+          id: e.id,
+          lat: e.lat || e.center?.lat,
+          lng: e.lon || e.center?.lon,
+          name: e.tags.name || e.tags.brand || e.tags.operator || category.replace("_", " "),
+          category,
+          tags: e.tags,
+        }))
+        .filter((e: any) => e.lat && e.lng);
     } catch (err) {
       console.error(`Failed to fetch POIs from ${endpoint}:`, err);
       // Try next endpoint
@@ -244,23 +297,42 @@ export async function getPOIs(bounds: { _sw: LatLng; _ne: LatLng }, category: "r
 }
 
 export const WEATHER_CODE: Record<number, string> = {
-  0: "Clear", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
-  45: "Fog", 48: "Rime fog", 51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle",
-  61: "Light rain", 63: "Rain", 65: "Heavy rain", 71: "Light snow", 73: "Snow", 75: "Heavy snow",
-  77: "Snow grains", 80: "Showers", 81: "Heavy showers", 82: "Violent showers",
-  85: "Snow showers", 86: "Heavy snow showers", 95: "Thunderstorm", 96: "Storm w/ hail", 99: "Severe storm",
+  0: "Clear",
+  1: "Mainly clear",
+  2: "Partly cloudy",
+  3: "Overcast",
+  45: "Fog",
+  48: "Rime fog",
+  51: "Light drizzle",
+  53: "Drizzle",
+  55: "Heavy drizzle",
+  61: "Light rain",
+  63: "Rain",
+  65: "Heavy rain",
+  71: "Light snow",
+  73: "Snow",
+  75: "Heavy snow",
+  77: "Snow grains",
+  80: "Showers",
+  81: "Heavy showers",
+  82: "Violent showers",
+  85: "Snow showers",
+  86: "Heavy snow showers",
+  95: "Thunderstorm",
+  96: "Storm w/ hail",
+  99: "Severe storm",
 };
 
 // Curiosity seeds — random places to explore on first load
 export const SEEDS: { name: string; lat: number; lng: number; note: string }[] = [
   { name: "Socotra", lat: 12.46, lng: 53.82, note: "Alien botany in the Arabian Sea" },
   { name: "Svalbard", lat: 78.22, lng: 15.65, note: "Where the seed vault lives" },
-  { name: "Timbuktu", lat: 16.77, lng: -3.00, note: "Manuscripts older than empires" },
-  { name: "Pitcairn Island", lat: -25.07, lng: -130.10, note: "Population: ~50" },
+  { name: "Timbuktu", lat: 16.77, lng: -3.0, note: "Manuscripts older than empires" },
+  { name: "Pitcairn Island", lat: -25.07, lng: -130.1, note: "Population: ~50" },
   { name: "Kowloon, Hong Kong", lat: 22.31, lng: 114.18, note: "Densest place that ever was" },
   { name: "Hashima Island", lat: 32.63, lng: 129.73, note: "An abandoned coal city" },
   { name: "Ittoqqortoormiit", lat: 70.48, lng: -21.97, note: "Hardest town to reach in Greenland" },
-  { name: "Tristan da Cunha", lat: -37.10, lng: -12.28, note: "Most remote inhabited archipelago" },
+  { name: "Tristan da Cunha", lat: -37.1, lng: -12.28, note: "Most remote inhabited archipelago" },
   { name: "Yakutsk", lat: 62.03, lng: 129.73, note: "Coldest city on Earth" },
   { name: "La Rinconada", lat: -14.63, lng: -69.45, note: "Highest permanent settlement" },
 ];

@@ -8,7 +8,12 @@ interface UIState {
   hover: PlaceHit | null;
   trail: PlaceHit[];
   mapViewport: { lat: number; lng: number; zoom: number; pitch: number; bearing: number } | null;
-  flyTo: { lat: number; lng: number; zoom?: number; bbox?: [number, number, number, number] } | null;
+  flyTo: {
+    lat: number;
+    lng: number;
+    zoom?: number;
+    bbox?: [number, number, number, number];
+  } | null;
   quakes: Quake[];
   showQuakes: boolean;
   navOpen: boolean;
@@ -36,7 +41,7 @@ interface UIState {
   showEconomics: boolean;
   showExtremes: boolean;
   showJourneys: boolean;
-  
+
   connections: (PlaceHit & { reason?: string })[];
   omniscienceLayer: { title: string; places: (PlaceHit & { reason?: string })[] } | null;
 
@@ -52,15 +57,31 @@ interface UIState {
   setHover: (place: PlaceHit | null) => void;
   addToTrail: (place: PlaceHit) => void;
   clearTrail: () => void;
-  setMapViewport: (viewport: { lat: number; lng: number; zoom: number; pitch: number; bearing: number }) => void;
-  setFlyTo: (target: { lat: number; lng: number; zoom?: number; bbox?: [number, number, number, number] } | null) => void;
+  setMapViewport: (viewport: {
+    lat: number;
+    lng: number;
+    zoom: number;
+    pitch: number;
+    bearing: number;
+  }) => void;
+  setFlyTo: (
+    target: {
+      lat: number;
+      lng: number;
+      zoom?: number;
+      bbox?: [number, number, number, number];
+    } | null,
+  ) => void;
   setQuakes: (quakes: Quake[]) => void;
   setShowQuakes: (show: boolean) => void;
   setNavOpen: (open: boolean) => void;
   setLeftPanelOpen: (open: boolean) => void;
   setRightPanelOpen: (open: boolean) => void;
   setPoiCategory: (cat: "restaurants" | "gas_stations" | "hotels" | "atms" | null) => void;
-  setRouteData: (route: { type: "LineString"; coordinates: [number, number][] } | null, ends: { from: LatLng | null; to: LatLng | null }) => void;
+  setRouteData: (
+    route: { type: "LineString"; coordinates: [number, number][] } | null,
+    ends: { from: LatLng | null; to: LatLng | null },
+  ) => void;
   setShowTraffic: (show: boolean) => void;
   setShow3D: (show: boolean) => void;
   setShowTimeline: (show: boolean) => void;
@@ -85,7 +106,9 @@ interface UIState {
   setShowJourneys: (show: boolean) => void;
 
   setConnections: (connections: (PlaceHit & { reason?: string })[]) => void;
-  setOmniscienceLayer: (layer: { title: string; places: (PlaceHit & { reason?: string })[] } | null) => void;
+  setOmniscienceLayer: (
+    layer: { title: string; places: (PlaceHit & { reason?: string })[] } | null,
+  ) => void;
 
   saveToList: (listName: string, place: PlaceHit, note: string) => void;
   removeFromList: (listName: string, placeId: string) => void;
@@ -139,18 +162,19 @@ export const useUIStore = create<UIState>()(
       connections: [],
       omniscienceLayer: null,
 
-      savedLists: { "Favorites": [], "Want to Go": [] },
+      savedLists: { Favorites: [], "Want to Go": [] },
       reviews: {},
       locationHistory: [],
 
       setHomePlace: (place) => set({ homePlace: place }),
       setSelected: (place) => set({ selected: place }),
       setHover: (place) => set({ hover: place }),
-      addToTrail: (place) => set((state) => {
-        const trail = state.trail;
-        if (trail.some(t => t.id === place.id)) return { trail };
-        return { trail: [place, ...trail].slice(0, 50) };
-      }),
+      addToTrail: (place) =>
+        set((state) => {
+          const trail = state.trail;
+          if (trail.some((t) => t.id === place.id)) return { trail };
+          return { trail: [place, ...trail].slice(0, 50) };
+        }),
       clearTrail: () => set({ trail: [] }),
       setMapViewport: (viewport) => set({ mapViewport: viewport }),
       setFlyTo: (target) => set({ flyTo: target }),
@@ -187,31 +211,48 @@ export const useUIStore = create<UIState>()(
       setConnections: (connections) => set({ connections }),
       setOmniscienceLayer: (layer) => set({ omniscienceLayer: layer }),
 
-      saveToList: (listName, place, note) => set((state) => {
-        const list = state.savedLists[listName] || [];
-        if (list.some(i => i.place.id === place.id)) return state;
-        return { savedLists: { ...state.savedLists, [listName]: [...list, { place, note, addedAt: Date.now() }] } };
-      }),
+      saveToList: (listName, place, note) =>
+        set((state) => {
+          const list = state.savedLists[listName] || [];
+          if (list.some((i) => i.place.id === place.id)) return state;
+          return {
+            savedLists: {
+              ...state.savedLists,
+              [listName]: [...list, { place, note, addedAt: Date.now() }],
+            },
+          };
+        }),
 
-      removeFromList: (listName, placeId) => set((state) => {
-        const list = state.savedLists[listName] || [];
-        return { savedLists: { ...state.savedLists, [listName]: list.filter(i => i.place.id !== placeId) } };
-      }),
+      removeFromList: (listName, placeId) =>
+        set((state) => {
+          const list = state.savedLists[listName] || [];
+          return {
+            savedLists: {
+              ...state.savedLists,
+              [listName]: list.filter((i) => i.place.id !== placeId),
+            },
+          };
+        }),
 
-      addReview: (placeId, rating, text) => set((state) => ({
-        reviews: { ...state.reviews, [placeId]: { rating, text, date: Date.now() } }
-      })),
+      addReview: (placeId, rating, text) =>
+        set((state) => ({
+          reviews: { ...state.reviews, [placeId]: { rating, text, date: Date.now() } },
+        })),
 
-      addLocationHistory: (lat, lng) => set((state) => {
-        const last = state.locationHistory[state.locationHistory.length - 1];
-        if (last && Math.abs(last.lat - lat) < 0.0001 && Math.abs(last.lng - lng) < 0.0001) return state;
-        return { locationHistory: [...state.locationHistory, { lat, lng, timestamp: Date.now() }] };
-      }),
+      addLocationHistory: (lat, lng) =>
+        set((state) => {
+          const last = state.locationHistory[state.locationHistory.length - 1];
+          if (last && Math.abs(last.lat - lat) < 0.0001 && Math.abs(last.lng - lng) < 0.0001)
+            return state;
+          return {
+            locationHistory: [...state.locationHistory, { lat, lng, timestamp: Date.now() }],
+          };
+        }),
 
       handlePick: (place) => {
         set({ selected: place, connections: [] });
         get().addToTrail(place);
-        
+
         let zoom = 15;
         if (place.kind === "country" || place.kind === "state") zoom = 5;
         else if (place.kind === "county" || place.kind === "region") zoom = 8;
@@ -221,9 +262,9 @@ export const useUIStore = create<UIState>()(
       },
     }),
     {
-      name: 'paths-ui-storage',
+      name: "paths-ui-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         homePlace: state.homePlace,
         selected: state.selected,
         trail: state.trail,
@@ -255,6 +296,6 @@ export const useUIStore = create<UIState>()(
         showExtremes: state.showExtremes,
         showJourneys: state.showJourneys,
       }),
-    }
-  )
+    },
+  ),
 );

@@ -5,12 +5,22 @@ import { useUIStore } from "@/lib/paths/UIStore";
 
 export default function MapStyleWidget() {
   const { style, setStyle } = useLayerManager();
-  const { navOpen, showTraffic, setShowTraffic, show3D, setShow3D, measurementMode, setMeasurementMode, showTimeline, setShowTimeline } = useUIStore();
+  const {
+    navOpen,
+    showTraffic,
+    setShowTraffic,
+    show3D,
+    setShow3D,
+    measurementMode,
+    setMeasurementMode,
+    showTimeline,
+    setShowTimeline,
+  } = useUIStore();
   const [open, setOpen] = useState(false);
 
   return (
-    <div 
-      className={`absolute bottom-6 z-20 flex flex-col gap-2 pointer-events-auto transition-all duration-300 ${navOpen ? 'left-[380px]' : 'left-4'}`}
+    <div
+      className={`absolute bottom-6 z-20 flex flex-col gap-2 pointer-events-auto transition-all duration-300 ${navOpen ? "left-[380px]" : "left-4"}`}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
@@ -68,8 +78,8 @@ export default function MapStyleWidget() {
           </button>
         </div>
       )}
-      
-      <button 
+
+      <button
         onClick={() => setOpen(!open)}
         className="w-10 h-10 bg-panel border border-line rounded-md shadow-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-accent transition-colors"
         title="Change map style"
